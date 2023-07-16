@@ -11,19 +11,27 @@ async function publish(ovsxOptions: ActionOptions): Promise<void> {
         await vscePublishVSIX(ovsxOptions.extensionFile, vsceOptions);
     } else {
         const options: PublishOptions = { ...ovsxOptions, packagePath: [ovsxOptions.packagePath] };
-        await ovsxPublish(options);
+        const results = await ovsxPublish(options);
+        results?.forEach(result => {
+            if (result.status === 'rejected') {
+                throw result.reason;
+            }
+        });
     }
 }
 
 function _convertToVSCEPublishOptions(options: ActionOptions): VSCEPublishOptions {
     // Shallow copy of options
-    const { baseContentUrl, baseImagesUrl, pat, yarn: useYarn, noVerify } = { ...options };
+    const { baseContentUrl, baseImagesUrl, pat, yarn: useYarn, noVerify, dependencies, skipDuplicate, preRelease } = { ...options };
     const result = {
         baseContentUrl,
         useYarn,
         pat,
         baseImagesUrl,
-        noVerify
+        noVerify,
+        dependencies,
+        skipDuplicate,
+        preRelease
     };
     return result;
 }

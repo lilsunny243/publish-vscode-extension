@@ -37,6 +37,17 @@ export interface ActionOptions {
      * Mark this package as a pre-release, vsce argument `--pre-release`
      */
     preRelease?: boolean;
+    /**
+     * This is the inverse of the `--no-dependencies` flag in vsce. When false, vsce will
+     * not check for the existence of dependencies defined in package.json in node_modules.
+     * Set this to false if using pnpm or yarn v2+ with PnP enabled.
+     */
+    dependencies?: boolean;
+
+    /**
+     * Don't throw an error when the package version is already present in the registry
+     */
+    skipDuplicate?: boolean;
 }
 
 export interface PackageJSON {

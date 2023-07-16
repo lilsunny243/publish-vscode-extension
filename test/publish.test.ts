@@ -32,7 +32,10 @@ describe('publish', () => {
             packagePath: 'myPackagePath',
             pat: 'myPersonalAccessToken',
             yarn: false,
-            noVerify: true
+            noVerify: true,
+            dependencies: true,
+            skipDuplicate: false,
+            preRelease: false
         });
 
         expect(publishVSIXStub).to.have.been.calledOnceWithExactly('myExtensionFile', {
@@ -40,7 +43,10 @@ describe('publish', () => {
             baseImagesUrl: 'myBaseImageUrl',
             pat: 'myPersonalAccessToken',
             useYarn: false,
-            noVerify: true
+            noVerify: true,
+            dependencies: true,
+            skipDuplicate: false,
+            preRelease: false
         });
     });
 
@@ -66,18 +72,38 @@ describe('publish', () => {
         });
     });
 
-    it('failed attempt to publish preRelease to Open VSX registry', async () =>
-        publish({
-            registryUrl: 'https://open-vsx.org',
-            baseContentUrl: 'myBaseContentUrl',
-            baseImagesUrl: 'myBaseImageUrl',
-            extensionFile: 'myExtensionFile',
-            packagePath: 'myPackagePath',
-            pat: 'myPersonalAccessToken',
-            yarn: true
-        }).catch(error =>
-            expect(error)
-                .to.be.an('error')
-                .with.property('message', 'Open VSX does not support option preRelease')
-        ));
+    it('should throw if publishing to Open VSX registry has failed', async () => {
+        const failReason = 'some reason.';
+        const failedPromise = await Promise.allSettled([Promise.resolve(0), Promise.reject(failReason)]);
+        publishOpenVSXStub.resolves(failedPromise);
+
+        await expect(
+            publish({
+                registryUrl: 'https://open-vsx.org',
+                baseContentUrl: 'myBaseContentUrl',
+                baseImagesUrl: 'myBaseImageUrl',
+                extensionFile: 'myExtensionFile',
+                packagePath: 'myPackagePath',
+                pat: 'myPersonalAccessToken',
+                yarn: false
+            })
+        ).to.be.rejectedWith(failReason);
+    });
+
+    it('should not throw if publishing to Open VSX registry has not failed', async () => {
+        const resolvedPromise = await Promise.allSettled([Promise.resolve(0), Promise.resolve(0)]);
+        publishOpenVSXStub.resolves(resolvedPromise);
+
+        await expect(
+            publish({
+                registryUrl: 'https://open-vsx.org',
+                baseContentUrl: 'myBaseContentUrl',
+                baseImagesUrl: 'myBaseImageUrl',
+                extensionFile: 'myExtensionFile',
+                packagePath: 'myPackagePath',
+                pat: 'myPersonalAccessToken',
+                yarn: false
+            })
+        ).not.to.be.rejectedWith();
+    });
 });
